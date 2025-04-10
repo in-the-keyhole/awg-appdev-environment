@@ -1,0 +1,31 @@
+metadata:
+  org: "awginc.com"
+  maintainer: "k8s-admin (me@example.com)"
+  description: "deploys Helm charts required for the initial Crossplane install"
+
+settings:
+
+namespaces:
+  crossplane-system:
+    protected: false
+
+helmRepos:
+  appdev: https://awgappdevops.azurecr.io
+  crossplane: https://charts.crossplane.io/stable
+
+apps:
+  crossplane:
+    name: crossplane
+    namespace: crossplane-system
+    enabled: true
+    chart: crossplane/crossplane
+    version: 1.19.1
+    wait: true
+  awg-appdev-init:
+    name: awg-appdev-init
+    namespace: crossplane-system
+    enabled: true
+    chart: awg-appdev-init
+    version: ${AWG_APPDEVLIB_VERSION}
+    wait: true
+  
