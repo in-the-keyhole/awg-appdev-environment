@@ -11,23 +11,29 @@ param(
 
 .\deploy.ps1 `
     -Stage $Stage `
-    -DefaultName "awg-app" `
+    -TfStateResourceGroupName "rg-appdev-tfstate" `
+    -TfStateStorageAccountName "appdevtfstate" `
+    -DefaultName "awg-appdev-dev" `
     -ReleaseName "1.0.0" `
     -DefaultTags @{} `
-    -MetadataLocation "westus" `
-    -ResourceLocation "eastus" `
-    -DnsZoneName "app.pub.az.awg.ikvm.org" `
-    -InternalDnsZoneName "app.int.az.awg.keyholesoftware.com" `
-    -VnetAddressPrefix "10.224.0.0/16" `
-    -DefaultVnetSubnetAddressPrefix "10.224.0.0/24" `
+    -MetadataLocation "northcentralus" `
+    -ResourceLocation "southcentralus" `
+    -PlatformSubscriptionId "6190d2d3-f65d-4f7a-939e-ad9829c27fd5" `
+    -PlatformName "awg-appdev-labs" `
+    -PlatformDnsZoneName "labs.appdev.az.awginc.com" `
+    -DnsZoneName "dev.labs.appdev.az.awginc.com" `
+    -PlatformInternalDnsZoneName "labs.appdev.az.int.awginc.com" `
+    -InternalDnsZoneName "dev.labs.appdev.az.int.awginc.com" `
+    -AksVnetSubnetAddressPrefix "10.224.64.0/18" `
     -AksSkuName "Base" `
     -AksSkuTier "Free" `
     -AksAadAdminGroupObjectIds @() `
     -AksAvailabilityZones @() `
-    -AksVnetSubnetAddressPrefix "10.224.1.0/24" `
     -AksServiceCidr "192.168.0.0/16" `
     -AksDnsServiceIp "192.168.0.10" `
     -AksPodCidr "172.16.0.0/12" `
     -AksSysNodeSize "Standard_B4ms" `
     -AksSysMinNodeCount 1 `
-    -AksSysMaxNodeCount 3
+    -AksSysMaxNodeCount 3 `
+    -PrivateLinkZoneResourceGroupId "/subscriptions/6190d2d3-f65d-4f7a-939e-ad9829c27fd5/resourceGroups/rg-awg-hub"
+    

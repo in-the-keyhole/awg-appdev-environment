@@ -1,17 +1,27 @@
-resource "azurerm_resource_group" "aks" {
-  name = "${var.default_name}-aks"
+resource azurerm_resource_group aks {
+  name = "rg-${var.default_name}-aks"
   tags = var.default_tags
   location = var.metadata_location
+
+  lifecycle {
+    ignore_changes = [ tags ]
+  }
 }
 
-resource "azapi_resource" "ssh_public_key" {
+resource azapi_resource ssh_public_key {
   type = "Microsoft.Compute/sshPublicKeys@2022-11-01"
   name = "${var.default_name}-aks"
+  tags = var.default_tags
   location  = var.resource_location
   parent_id = azurerm_resource_group.aks.id
+
+  lifecycle {
+    ignore_changes = [ tags ]
+  }
 }
 
-resource "azapi_resource_action" "ssh_public_key" {
+# generate a SSH key for the AKS cluster
+resource azapi_resource_action ssh_public_key {
   type = "Microsoft.Compute/sshPublicKeys@2022-11-01"
   resource_id = azapi_resource.ssh_public_key.id
   action = "generateKeyPair"
@@ -19,14 +29,31 @@ resource "azapi_resource_action" "ssh_public_key" {
   response_export_values = ["publicKey", "privateKey"]
 }
 
-resource "azurerm_kubernetes_cluster" "aks" {
+# prepare identity for AKS
+resource azurerm_user_assigned_identity aks {
+  name = "${var.default_name}-aks"
+  tags = var.default_tags
+  resource_group_name = azurerm_resource_group.aks.name
+  location = var.resource_location
+
+  lifecycle {
+    ignore_changes = [ tags ]
+  }
+}
+
+# deploy AKS cluster for the environment
+resource azurerm_kubernetes_cluster aks {
   name = var.default_name
   tags = var.default_tags
   resource_group_name = azurerm_resource_group.aks.name
   location = var.resource_location
 
-  kubernetes_version = "1.32.3"
-  dns_prefix = "${var.default_name}"
+  kubernetes_version = "1.32"
+  private_cluster_enabled = true
+  private_dns_zone_id = "${var.privatelink_zone_resource_group_id}/providers/Microsoft.Network/privateDnsZones/privatelink.${var.resource_location}.azmk8s.io"
+  private_cluster_public_fqdn_enabled = false
+  
+  dns_prefix = var.default_name
   node_resource_group = "${azurerm_resource_group.aks.name}-mc"
   local_account_disabled = true
   role_based_access_control_enabled = true
@@ -39,7 +66,10 @@ resource "azurerm_kubernetes_cluster" "aks" {
   image_cleaner_interval_hours = 7 * 24
 
   identity {
-    type = "SystemAssigned"
+    type = "UserAssigned"
+    identity_ids = [
+      azurerm_user_assigned_identity.aks.id
+    ]
   }
 
   azure_active_directory_role_based_access_control {
@@ -109,26 +139,32 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   lifecycle {
+    ignore_changes = [ tags ]
     prevent_destroy = false
   }
 }
 
-resource "azurerm_role_assignment" "aksclusteradmin" {
+# assign ourselves as RBAC Cluster Admin to the AKS resource group
+resource azurerm_role_assignment aks_cluster_admin {
   scope = azurerm_resource_group.aks.id
   role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
   principal_id = data.azurerm_client_config.current.object_id
 }
 
 # prepare initial identity for bootstrapping Crossplane
-resource azurerm_user_assigned_identity "crossplane" {
+resource azurerm_user_assigned_identity crossplane {
   name = "${var.default_name}-crossplane"
   tags = var.default_tags
   resource_group_name = azurerm_resource_group.aks.name
   location = var.resource_location
+
+  lifecycle {
+    ignore_changes = [ tags ]
+  }
 }
 
 # associate Crossplane identity with eventual ServiceAccount
-resource azurerm_federated_identity_credential "crossplane-azure" {
+resource azurerm_federated_identity_credential crossplane-azure {
   name = "aks"
   resource_group_name = azurerm_resource_group.aks.name
   audience = ["api://AzureADTokenExchange"]
