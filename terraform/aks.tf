@@ -41,6 +41,20 @@ resource azurerm_user_assigned_identity aks {
   }
 }
 
+# assign ourselves as RBAC Cluster Admin to the AKS resource group
+resource azurerm_role_assignment aks_cluster_admin {
+  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
+  scope = azurerm_resource_group.aks.id
+  principal_id = data.azurerm_client_config.current.object_id
+}
+
+# assign ourselves as Private DNS Zone Contributor to the AKS private zone
+resource azurerm_role_assignment aks_dns_contributor {
+  role_definition_name = "Private DNS Zone Contributor"
+  scope = "${data.azurerm_resource_group.platform.id}/providers/Microsoft.Network/privateDnsZones/${var.platform_name}.privatelink.${var.resource_location}.azmk8s.io"
+  principal_id = azurerm_user_assigned_identity.aks.principal_id
+}
+
 # deploy AKS cluster for the environment
 resource azurerm_kubernetes_cluster aks {
   name = var.default_name
@@ -50,7 +64,7 @@ resource azurerm_kubernetes_cluster aks {
 
   kubernetes_version = "1.32"
   private_cluster_enabled = true
-  private_dns_zone_id = "${var.privatelink_zone_resource_group_id}/providers/Microsoft.Network/privateDnsZones/privatelink.${var.resource_location}.azmk8s.io"
+  private_dns_zone_id = "${data.azurerm_resource_group.platform.id}/providers/Microsoft.Network/privateDnsZones/${var.platform_name}.privatelink.${var.resource_location}.azmk8s.io"
   private_cluster_public_fqdn_enabled = false
   
   dns_prefix = var.default_name
@@ -91,7 +105,7 @@ resource azurerm_kubernetes_cluster aks {
 
   service_mesh_profile {
     mode = "Istio"
-    revisions = ["asm-1-23"]
+    revisions = ["asm-1-24"]
   }
 
   workload_autoscaler_profile {
@@ -142,13 +156,11 @@ resource azurerm_kubernetes_cluster aks {
     ignore_changes = [ tags ]
     prevent_destroy = false
   }
-}
 
-# assign ourselves as RBAC Cluster Admin to the AKS resource group
-resource azurerm_role_assignment aks_cluster_admin {
-  scope = azurerm_resource_group.aks.id
-  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
-  principal_id = data.azurerm_client_config.current.object_id
+  depends_on = [
+    azurerm_role_assignment.aks_cluster_admin,
+    azurerm_role_assignment.aks_dns_contributor 
+  ]
 }
 
 # prepare initial identity for bootstrapping Crossplane
