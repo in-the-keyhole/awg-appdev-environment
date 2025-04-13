@@ -1,3 +1,13 @@
+# create the AKS subnet in the platform VNet
+resource azurerm_subnet aks {
+  provider = azurerm.platform
+  name = "${var.default_name}-aks"
+  resource_group_name = data.azurerm_resource_group.platform.name
+  virtual_network_name = data.azurerm_virtual_network.platform.name
+  address_prefixes = var.aks_vnet_subnet_address_prefixes
+}
+
+# create the AKS resource group
 resource azurerm_resource_group aks {
   name = "rg-${var.default_name}-aks"
   tags = var.default_tags
@@ -8,6 +18,25 @@ resource azurerm_resource_group aks {
   }
 }
 
+# create the AKS network security group
+resource azurerm_network_security_group aks {
+  name = "${var.default_name}-aks"
+  resource_group_name = azurerm_resource_group.aks.name
+  location = data.azurerm_virtual_network.platform.location
+
+  lifecycle {
+    ignore_changes = [ tags ]
+  }
+}
+
+# associate the NSG with the subnet
+resource azurerm_subnet_network_security_group_association aks {
+  provider = azurerm.platform
+  subnet_id = azurerm_subnet.aks.id
+  network_security_group_id = azurerm_network_security_group.aks.id
+}
+
+# public key resource to hold AKS SSH key
 resource azapi_resource ssh_public_key {
   type = "Microsoft.Compute/sshPublicKeys@2022-11-01"
   name = "${var.default_name}-aks"
@@ -50,6 +79,7 @@ resource azurerm_role_assignment aks_cluster_admin {
 
 # assign ourselves as Private DNS Zone Contributor to the AKS private zone
 resource azurerm_role_assignment aks_dns_contributor {
+  provider = azurerm.platform
   role_definition_name = "Private DNS Zone Contributor"
   scope = "${data.azurerm_resource_group.platform.id}/providers/Microsoft.Network/privateDnsZones/${var.platform_name}.privatelink.${var.resource_location}.azmk8s.io"
   principal_id = azurerm_user_assigned_identity.aks.principal_id
@@ -105,7 +135,9 @@ resource azurerm_kubernetes_cluster aks {
 
   service_mesh_profile {
     mode = "Istio"
-    revisions = ["asm-1-24"]
+    revisions = ["asm-1-23","asm-1-24"]
+    internal_ingress_gateway_enabled = true
+    external_ingress_gateway_enabled = true
   }
 
   workload_autoscaler_profile {
@@ -154,7 +186,7 @@ resource azurerm_kubernetes_cluster aks {
 
   lifecycle {
     ignore_changes = [ tags ]
-    prevent_destroy = false
+    prevent_destroy = true
   }
 
   depends_on = [
