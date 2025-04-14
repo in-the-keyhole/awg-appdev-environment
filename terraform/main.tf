@@ -19,6 +19,10 @@ provider azurerm {
   features {}
 }
 
+provider azapi {
+  subscription_id = var.subscription_id
+}
+
 provider azurerm {
   alias = "platform"
   subscription_id = var.platform_subscription_id

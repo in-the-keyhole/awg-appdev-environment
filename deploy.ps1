@@ -124,19 +124,4 @@ if ($Stage -eq 'all' -or $Stage -eq 'tf') {
     }
 }
 
-if ($Stage -eq 'all' -or $Stage -eq 'helmsman') {
-    if ((Get-Command 'helmsman').CommandType -ne 'Application') {
-        throw 'Missing helmsman command.'
-    }
 
-    # login to AKS
-    az aks get-credentials -g "$DefaultName-aks" -n "$DefaultName" --overwrite-existing; if ($LASTEXITCODE -ne 0) { throw $LASTEXITCODE }
-
-    Push-Location helmsman
-
-    try {
-        helmsman --apply -f helmsman.yaml
-    } finally {
-        Pop-Location
-    }
-}

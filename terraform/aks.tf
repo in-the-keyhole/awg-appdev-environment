@@ -7,6 +7,13 @@ resource azurerm_subnet aks {
   address_prefixes = var.aks_vnet_subnet_address_prefixes
 }
 
+# assign permissions to the subnet for the AKS identity
+resource azurerm_role_assignment aks_network_contributor {
+  principal_id = azurerm_user_assigned_identity.aks.principal_id
+  role_definition_name = "Network Contributor"
+  scope = azurerm_subnet.aks.id
+}
+
 # create the AKS resource group
 resource azurerm_resource_group aks {
   name = "rg-${var.default_name}-aks"
@@ -92,6 +99,7 @@ resource azurerm_kubernetes_cluster aks {
   resource_group_name = azurerm_resource_group.aks.name
   location = var.resource_location
 
+  sku_tier = "Standard"
   kubernetes_version = "1.32"
   private_cluster_enabled = true
   private_dns_zone_id = "${data.azurerm_resource_group.platform.id}/providers/Microsoft.Network/privateDnsZones/${var.platform_name}.privatelink.${var.resource_location}.azmk8s.io"
@@ -135,7 +143,7 @@ resource azurerm_kubernetes_cluster aks {
 
   service_mesh_profile {
     mode = "Istio"
-    revisions = ["asm-1-23","asm-1-24"]
+    revisions = ["asm-1-24"]
     internal_ingress_gateway_enabled = true
     external_ingress_gateway_enabled = true
   }
@@ -207,12 +215,30 @@ resource azurerm_user_assigned_identity crossplane {
   }
 }
 
-# associate Crossplane identity with eventual ServiceAccount
-resource azurerm_federated_identity_credential crossplane-azure {
-  name = "aks"
+# assign Crossplane as Resource Group Contributor to the subscription so it can create new resource groups
+# TODO change this from Owner
+resource azurerm_role_assignment crossplane_rg_contributor {
+  role_definition_name = "Owner"
+  scope = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
+  principal_id = azurerm_user_assigned_identity.crossplane.principal_id
+}
+
+# associate Crossplane identity with Azure Provider
+resource azurerm_federated_identity_credential crossplane_azure {
+  name = "crossplane-system_upbound-provider-azure"
   resource_group_name = azurerm_resource_group.aks.name
   audience = ["api://AzureADTokenExchange"]
   issuer = azurerm_kubernetes_cluster.aks.oidc_issuer_url
   parent_id = azurerm_user_assigned_identity.crossplane.id
-  subject = "system:serviceaccount:crossplane-system:azure"
+  subject = "system:serviceaccount:crossplane-system:upbound-provider-azure"
+}
+
+# associate Crossplane identity with Helm Provider
+resource azurerm_federated_identity_credential crossplane_helm {
+  name = "crossplane-system_upbound-provider-helm"
+  resource_group_name = azurerm_resource_group.aks.name
+  audience = ["api://AzureADTokenExchange"]
+  issuer = azurerm_kubernetes_cluster.aks.oidc_issuer_url
+  parent_id = azurerm_user_assigned_identity.crossplane.id
+  subject = "system:serviceaccount:crossplane-system:upbound-provider-helm"
 }

@@ -1,0 +1,181 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${namespace}
+---
+
+##
+# ServiceAccount to be used by the Crossplane Helm provider.
+##
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: crossplane-system
+  name: upbound-provider-helm
+---
+
+##
+# Grant the Crossplane Helm provider cluster-admin so that it can install Helm charts into any namespace, including
+# cluster-scoped items. This is required because our init and conf packages contain Crossplane resources. This is
+# used by the default provider only.
+##
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: upbound-provider-helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  namespace: crossplane-system
+  name: upbound-provider-helm
+---
+
+##
+# Alter the Crossplane Helm provider so it has Azure Workload Identity information injected into it.
+##
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: upbound-provider-helm
+spec:
+  serviceAccountTemplate:
+    metadata:
+      name: upbound-provider-helm
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        metadata:
+          labels:
+            azure.workload.identity/use: "true"
+        spec:
+          containers:
+          - name: package-runtime
+            args:
+            - --enable-management-policies
+---
+
+##
+# Install the Crossplane Helm provider.
+##
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-helm
+spec:
+  package: xpkg.upbound.io/upbound/provider-helm:v0.20.4
+  runtimeConfigRef:
+    apiVersion: pkg.crossplane.io/v1beta1
+    kind: DeploymentRuntimeConfig
+    name: upbound-provider-helm
+---
+
+##
+# Default provider configuration for the Crossplane Helm provider.
+##
+apiVersion: helm.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: InjectedIdentity
+---
+
+##
+# Instruct the Crossplane Helm provider to install awg-appdev-init. This exists to bootstrap the rest of the process through Helm charts.
+##
+apiVersion: helm.crossplane.io/v1beta1
+kind: Release
+metadata:
+  name: awg-appdev-init
+  annotations:
+    crossplane.io/external-name: awg-appdev-init
+spec:
+  forProvider:
+    namespace: awg-appdev
+    chart:
+      repository: oci://${platform_registry.login_server}/charts
+      name: awg-appdev-init
+      version: ${awg_appdev_version}
+    set:
+    - name: repoHost
+      value: ${platform_registry.login_server}
+---
+
+##
+# Alter the Crossplane Azure provider so it has Azure Workload Identity information injected into it.
+##
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: upbound-provider-azure
+spec:
+  serviceAccountTemplate:
+    metadata:
+      name: upbound-provider-azure
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        metadata:
+          labels:
+            azure.workload.identity/use: "true"
+        spec:
+          containers:
+          - name: package-runtime
+            args:
+            - --enable-external-secret-stores
+            - --enable-management-policies
+---
+
+##
+# Install the Crossplane Azure provider.
+##
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-family-azure
+spec:
+  package: xpkg.upbound.io/upbound/provider-family-azure:${crossplane_azure_provider_version}
+  runtimeConfigRef:
+    apiVersion: pkg.crossplane.io/v1beta1
+    kind: DeploymentRuntimeConfig
+    name: upbound-provider-azure
+---
+
+##
+# Default provider configuration for the Crossplane Azure provider.
+##
+apiVersion: azure.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: OIDCTokenFile
+  oidcTokenFilePath: /var/run/secrets/azure/tokens/azure-identity-token
+  clientID: ${crossplane_azure_identity.client_id}
+  subscriptionID: ${azure_subscription_id}
+  tenantID: ${crossplane_azure_identity.tenant_id}
+---
+
+##
+# Install additional Crossplane Azure providers.
+##
+%{ for package in crossplane_azure_provider_package ~}
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-azure-${package}
+spec:
+  package: xpkg.upbound.io/upbound/provider-azure-${package}:${crossplane_azure_provider_version}
+  runtimeConfigRef:
+    apiVersion: pkg.crossplane.io/v1beta1
+    kind: DeploymentRuntimeConfig
+    name: upbound-provider-azure
+---
+%{ endfor ~}
