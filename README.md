@@ -60,6 +60,7 @@ An Application Development Environment contains unique:
 
 + Delegated Internal DNS Zone (dev1.labs.az.int.company.com)
 + Delegated Public DNS Zone (dev1.labs.az.company.com)
++ Virtual Network Subnet
 + Azure Kubernetes Cluster
 
 These resources are used to serve the various applications deployed within the environment. For instance, multiple applications deployed in the same Environment will be running on the same Kubernetes cluster.
