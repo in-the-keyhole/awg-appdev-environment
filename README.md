@@ -58,7 +58,7 @@ In an example like the above, four Azure subscriptions are used to separate vari
 
 An Application Development Environment contains unique:
 
-+ Delegated Internal DNS Zone (dev1.labs.int.az.company.com)
++ Delegated Internal DNS Zone (dev1.labs.az.int.company.com)
 + Delegated Public DNS Zone (dev1.labs.az.company.com)
 + Azure Kubernetes Cluster
 

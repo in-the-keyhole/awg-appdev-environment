@@ -6,18 +6,19 @@ data external aks_credentials {
 
 locals {
   aks_bootstrap_vars = {
-    mark = 5
+    mark = 6
     hash = filesha1("${path.module}/aks-bootstrap.yaml.tftpl")
     namespace = "awg-appdev"
     default_name = var.default_name
     release_name = var.release_name
     default_tags = var.default_tags
     platform_registry = data.azurerm_container_registry.platform
-    awg_appdev_version = "0.0.19"
+    awg_appdev_version = "0.0.122"
     azure_subscription_id = data.azurerm_client_config.current.subscription_id,
     crossplane_azure_identity = azurerm_user_assigned_identity.crossplane
     crossplane_azure_provider_version = "v1.11.3"
     crossplane_azure_provider_package = [
+      "authorization",
       "compute",
       "cosmosdb",
       "dbformysql",
@@ -35,6 +36,15 @@ locals {
       "storage",
       "web"
     ],
+    env = {
+      defaultName = var.default_name
+      releaseName = var.release_name
+      defaultTags = var.default_tags
+      dnsZoneName = azurerm_dns_zone.public.name,
+      internalDnsZoneName = azurerm_private_dns_zone.internal.name,
+      vnetId = data.azurerm_virtual_network.platform.id,
+      cluster = azurerm_kubernetes_cluster.aks
+    }
   }
 }
 
@@ -65,7 +75,7 @@ resource azapi_resource_action aks_install_crossplane {
   method = "POST"
   body = {
     clusterToken = data.external.aks_credentials.result.accessToken
-    command = "helm repo add crossplane-stable https://charts.crossplane.io/stable && helm repo update && helm upgrade --install crossplane --namespace crossplane-system --create-namespace --wait crossplane-stable/crossplane --version 1.19.0"
+    command = "helm repo add crossplane-stable https://charts.crossplane.io/stable && helm repo update && helm upgrade --install crossplane --namespace crossplane-system --create-namespace --wait crossplane-stable/crossplane --version 1.19.0 --set args={'--debug'}"
   }
 
   depends_on = [

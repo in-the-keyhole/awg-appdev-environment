@@ -5,6 +5,97 @@ metadata:
 ---
 
 ##
+# Various information to be made available to Crossplane at runtime.
+##
+apiVersion: apiextensions.crossplane.io/v1beta1
+kind: EnvironmentConfig
+metadata:
+  name: awg-appdev
+data:
+  ${indent(2, yamlencode(env))}
+---
+
+##
+# ServiceAccount to be used by the Crossplane Kubernetes provider.
+##
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: crossplane-system
+  name: upbound-provider-kubernetes
+---
+
+##
+# Grant the Crossplane Kubernetes provider cluster-admin so that it can manipulate objects in any namespace, including
+# cluster-scoped items.
+##
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: upbound-provider-kubernetes
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  namespace: crossplane-system
+  name: upbound-provider-kubernetes
+---
+
+##
+# Alter the Crossplane Kubernetes provider so it has Azure Workload Identity information injected into it.
+##
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: upbound-provider-kubernetes
+spec:
+  serviceAccountTemplate:
+    metadata:
+      name: upbound-provider-kubernetes
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        metadata:
+          labels:
+            azure.workload.identity/use: "true"
+        spec:
+          containers:
+          - name: package-runtime
+            args:
+            - --enable-management-policies
+---
+
+##
+# Install the Crossplane Kubernetes provider.
+##
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-kubernetes
+spec:
+  package: xpkg.upbound.io/upbound/provider-kubernetes:v0.17.1
+  runtimeConfigRef:
+    apiVersion: pkg.crossplane.io/v1beta1
+    kind: DeploymentRuntimeConfig
+    name: upbound-provider-helm
+---
+
+##
+# Default provider configuration for the Crossplane Kubernetes provider.
+##
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: InjectedIdentity
+---
+
+##
 # ServiceAccount to be used by the Crossplane Helm provider.
 ##
 apiVersion: v1
@@ -179,3 +270,4 @@ spec:
     name: upbound-provider-azure
 ---
 %{ endfor ~}
+
