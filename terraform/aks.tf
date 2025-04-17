@@ -148,6 +148,11 @@ resource azurerm_kubernetes_cluster aks {
     external_ingress_gateway_enabled = true
   }
 
+  monitor_metrics {
+    annotations_allowed = true
+    labels_allowed = true
+  }
+
   workload_autoscaler_profile {
     keda_enabled = true
     vertical_pod_autoscaler_enabled = true
@@ -202,6 +207,28 @@ resource azurerm_kubernetes_cluster aks {
     azurerm_role_assignment.aks_dns_contributor 
   ]
 }
+
+# resource azapi_update_resource aks_cluster_patch_acns {
+#   type = "Microsoft.ContainerService/ManagedClusters@2024-09-01"
+#   parent_id = "/subscriptions/00000/resourceGroups/example"
+#   name = "example"
+
+#   body = {
+#     properties = {
+#       networkProfile = {
+#         advancedNetworking = {
+#           enabled = true
+#           observability = {
+#             enabled       = true
+#           }
+#           security = {
+#             enabled = false
+#           }
+#         }
+#       }
+#     }
+#   }
+# }
 
 # prepare initial identity for bootstrapping Crossplane
 resource azurerm_user_assigned_identity crossplane {
