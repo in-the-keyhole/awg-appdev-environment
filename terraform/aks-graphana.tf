@@ -27,7 +27,7 @@ resource azurerm_dashboard_grafana grafana {
 }
 
 resource azurerm_role_assignment datareaderrole {
+  role_definition_name = "Monitoring Data Reader"
   scope = data.azurerm_monitor_workspace.platform.id
-  role_definition_id = "/subscriptions/${split("/", data.azurerm_monitor_workspace.platform.id)[2]}/providers/Microsoft.Authorization/roleDefinitions/b0d8363b-8ddd-447d-831f-62ca05bff136"
-  principal_id = azurerm_dashboard_grafana.grafana.identity.0.principal_id
+  principal_id = azurerm_dashboard_grafana.grafana.identity[0].principal_id
 }

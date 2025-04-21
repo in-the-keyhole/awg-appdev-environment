@@ -9,9 +9,9 @@ resource azurerm_subnet aks {
 
 # assign permissions to the subnet for the AKS identity
 resource azurerm_role_assignment aks_network_contributor {
-  principal_id = azurerm_user_assigned_identity.aks.principal_id
   role_definition_name = "Network Contributor"
   scope = azurerm_subnet.aks.id
+  principal_id = azurerm_user_assigned_identity.aks.principal_id
 }
 
 # create the AKS resource group
