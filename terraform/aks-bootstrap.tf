@@ -13,7 +13,7 @@ locals {
     release_name = var.release_name
     default_tags = var.default_tags
     platform_registry = data.azurerm_container_registry.platform
-    awg_appdev_version = "0.0.233"
+    awg_appdev_version = "0.0.269"
     azure_subscription_id = data.azurerm_client_config.current.subscription_id,
     crossplane_azure_identity = azurerm_user_assigned_identity.crossplane
     crossplane_azure_provider_version = "v1.11.3"
