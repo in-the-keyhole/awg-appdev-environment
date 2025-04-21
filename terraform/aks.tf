@@ -208,64 +208,8 @@ resource azurerm_kubernetes_cluster aks {
   ]
 }
 
-# resource azapi_update_resource aks_cluster_patch_acns {
-#   type = "Microsoft.ContainerService/ManagedClusters@2024-09-01"
-#   parent_id = "/subscriptions/00000/resourceGroups/example"
-#   name = "example"
-
-#   body = {
-#     properties = {
-#       networkProfile = {
-#         advancedNetworking = {
-#           enabled = true
-#           observability = {
-#             enabled       = true
-#           }
-#           security = {
-#             enabled = false
-#           }
-#         }
-#       }
-#     }
-#   }
-# }
-
-# prepare initial identity for bootstrapping Crossplane
-resource azurerm_user_assigned_identity crossplane {
-  name = "${var.default_name}-crossplane"
-  tags = var.default_tags
-  resource_group_name = azurerm_resource_group.aks.name
-  location = var.resource_location
-
-  lifecycle {
-    ignore_changes = [ tags ]
-  }
-}
-
-# assign Crossplane as Resource Group Contributor to the subscription so it can create new resource groups
-# TODO change this from Owner
-resource azurerm_role_assignment crossplane_rg_contributor {
-  role_definition_name = "Owner"
-  scope = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
-  principal_id = azurerm_user_assigned_identity.crossplane.principal_id
-}
-
-# associate Crossplane identity with Azure Provider
-resource azurerm_federated_identity_credential crossplane_azure {
-  name = "crossplane-system_upbound-provider-azure"
-  resource_group_name = azurerm_resource_group.aks.name
-  audience = ["api://AzureADTokenExchange"]
-  issuer = azurerm_kubernetes_cluster.aks.oidc_issuer_url
-  parent_id = azurerm_user_assigned_identity.crossplane.id
-  subject = "system:serviceaccount:crossplane-system:upbound-provider-azure"
-}
-
-# associate Crossplane identity with Helm Provider
-resource azurerm_federated_identity_credential crossplane_helm {
-  name = "crossplane-system_upbound-provider-helm"
-  resource_group_name = azurerm_resource_group.aks.name
-  audience = ["api://AzureADTokenExchange"]
-  issuer = azurerm_kubernetes_cluster.aks.oidc_issuer_url
-  parent_id = azurerm_user_assigned_identity.crossplane.id
-  subject = "system:serviceaccount:crossplane-system:upbound-provider-helm"
+# get access token to AKS instance
+# TODO this isn't quite right since it doesn't adopt azurerm's authentication information
+data external aks_credentials {
+  program = [ "az", "account", "get-access-token", "--resource", "6dae42f8-4368-4678-94ff-3960e28e3630", "-o", "json", "--query", "{accessToken: accessToken}" ]
 }
