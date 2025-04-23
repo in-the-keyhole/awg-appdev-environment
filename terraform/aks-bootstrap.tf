@@ -7,8 +7,12 @@ locals {
     release_name = var.release_name
     default_tags = var.default_tags
     platform_registry = data.azurerm_container_registry.platform
-    awg_appdev_version = "0.0.350"
-    azure_subscription_id = data.azurerm_client_config.current.subscription_id,
+    awg_appdev_version = "0.0.386"
+    azure_subscription_id = data.azurerm_client_config.current.subscription_id
+    dns_zone_name = azurerm_dns_zone.public.name
+    internal_dns_zone_name = azurerm_private_dns_zone.internal.name
+    internal_cert_bundle = local.roots_pem
+    internal_acme_url = "https://ca.${data.azurerm_private_dns_zone.platform_internal.name}/acme/acme/directory"
     crossplane_azure_identity = azurerm_user_assigned_identity.crossplane
     crossplane_azure_provider_version = "v1.11.3"
     crossplane_azure_provider_package = [
@@ -29,18 +33,18 @@ locals {
       "sql",
       "storage",
       "web"
-    ],
+    ]
     env = {
       defaultName = var.default_name
       releaseName = var.release_name
       defaultTags = var.default_tags
-      dnsZoneName = azurerm_dns_zone.public.name,
-      internalDnsZoneName = azurerm_private_dns_zone.internal.name,
+      dnsZoneName = azurerm_dns_zone.public.name
+      internalDnsZoneName = azurerm_private_dns_zone.internal.name
       azure = {
-        tenantId = data.azurerm_client_config.current.tenant_id,
-        subscriptionId = data.azurerm_client_config.current.subscription_id,
-        resourceGroupId = azurerm_resource_group.aks.id,
-        vnetId = data.azurerm_virtual_network.platform.id,
+        tenantId = data.azurerm_client_config.current.tenant_id
+        subscriptionId = data.azurerm_client_config.current.subscription_id
+        resourceGroupId = azurerm_resource_group.aks.id
+        vnetId = data.azurerm_virtual_network.platform.id
         privateSubnetId = data.azurerm_subnet.private.id
       }
       cluster = azurerm_kubernetes_cluster.aks

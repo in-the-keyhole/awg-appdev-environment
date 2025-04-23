@@ -25,6 +25,7 @@ param(
     [Parameter(Mandatory)][string]$DnsZoneName,
     [Parameter(Mandatory)][string]$PlatformInternalDnsZoneName,
     [Parameter(Mandatory)][string]$InternalDnsZoneName,
+    [Parameter(Mandatory)][string]$InternalCaFingerprint,
 
     [Parameter(Mandatory)][string]$AksVnetSubnetAddressPrefix,
 
@@ -87,6 +88,7 @@ if ($Stage -eq 'all' -or $Stage -eq 'tf') {
         dns_zone_name = $DnsZoneName
         platform_internal_dns_zone_name = $PlatformInternalDnsZoneName
         internal_dns_zone_name = $InternalDnsZoneName
+        internal_ca_fingerprint = $InternalCaFingerprint
         aks_vnet_subnet_address_prefixes = @( $AksVnetSubnetAddressPrefix )
         aks_sku_name = $AksSkuName
         aks_sku_tier = $AksSkuTier

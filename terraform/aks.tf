@@ -208,6 +208,20 @@ resource azurerm_kubernetes_cluster aks {
   ]
 }
 
+# Update the custom CA trust certificates property in AKS. We must do this by hand since Terraform does not support it.
+resource azapi_update_resource aks_internal_ca {
+  type = "Microsoft.ContainerService/managedClusters@2025-01-01"
+  resource_id = azurerm_kubernetes_cluster.aks.id
+
+  body = {
+    properties ={
+      securityProfile = {
+        customCaTrustCertificates = [ base64encode(local.roots_pem)]
+      }
+    }
+  }
+}
+
 # get access token to AKS instance
 # TODO this isn't quite right since it doesn't adopt azurerm's authentication information
 data external aks_credentials {

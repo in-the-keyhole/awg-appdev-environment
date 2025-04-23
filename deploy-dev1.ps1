@@ -11,9 +11,9 @@ param(
 
 .\deploy.ps1 `
     -Stage $Stage `
-    -TfStateResourceGroupName "rg-appdev-tfstate" `
-    -TfStateStorageAccountName "appdevtfstate" `
-    -DefaultName "awg-appdev-dev" `
+    -TfStateResourceGroupName "rg-awg-appdev-labs-tfstate" `
+    -TfStateStorageAccountName "awgappdevlabstfstate" `
+    -DefaultName "awg-appdev-dev1" `
     -ReleaseName "1.0.0" `
     -DefaultTags @{} `
     -MetadataLocation "northcentralus" `
@@ -21,9 +21,10 @@ param(
     -PlatformSubscriptionId "6190d2d3-f65d-4f7a-939e-ad9829c27fd5" `
     -PlatformName "awg-appdev-labs" `
     -PlatformDnsZoneName "labs.appdev.az.awginc.com" `
-    -DnsZoneName "dev.labs.appdev.az.awginc.com" `
+    -DnsZoneName "dev1.labs.appdev.az.awginc.com" `
     -PlatformInternalDnsZoneName "labs.appdev.az.int.awginc.com" `
-    -InternalDnsZoneName "dev.labs.appdev.az.int.awginc.com" `
+    -InternalDnsZoneName "dev1.labs.appdev.az.int.awginc.com" `
+    -InternalCaFingerprint "557cf983fe75a59c1d1dabbf49f7ff0617383a0ffd454bd06709a2c01effe8c1" `
     -AksVnetSubnetAddressPrefix "10.224.64.0/18" `
     -AksSkuName "Base" `
     -AksSkuTier "Free" `

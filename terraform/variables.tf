@@ -58,6 +58,10 @@ variable internal_dns_zone_name {
   }
 }
 
+variable internal_ca_fingerprint {
+  type = string
+}
+
 variable aks_vnet_subnet_address_prefixes {
   type = list(string)
 }

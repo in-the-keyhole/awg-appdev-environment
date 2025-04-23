@@ -125,7 +125,8 @@ subjects:
 ---
 
 ##
-# Alter the Crossplane Helm provider so it has Azure Workload Identity information injected into it.
+# Alter the Crossplane Helm provider so it has Azure Workload Identity information injected into it. This is necessary
+# so that it can contact the Container Registry.
 ##
 apiVersion: pkg.crossplane.io/v1beta1
 kind: DeploymentRuntimeConfig
@@ -192,9 +193,13 @@ spec:
       repository: oci://${platform_registry.login_server}/charts
       name: awg-appdev-init
       version: ${awg_appdev_version}
-    set:
-    - name: repoHost
-      value: ${platform_registry.login_server}
+    values:
+      repoHost: ${platform_registry.login_server}
+      security:
+        certificates: ${jsonencode(internal_cert_bundle)}
+        issuers:
+          internal:
+            server: ${internal_acme_url}
 ---
 
 ##
