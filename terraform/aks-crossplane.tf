@@ -53,7 +53,7 @@ resource azapi_resource_action aks_crossplane_install {
   method = "POST"
   body = {
     clusterToken = data.external.aks_credentials.result.accessToken
-    command = "helm repo add crossplane-stable https://charts.crossplane.io/stable && helm repo update && helm upgrade --install crossplane --namespace crossplane-system --create-namespace --wait crossplane-stable/crossplane --version 1.19.0 --set args={'--debug'}"
+    command = "helm repo add crossplane-stable https://charts.crossplane.io/stable && helm repo update && helm upgrade --install crossplane --namespace crossplane-system --create-namespace --atomic --wait crossplane-stable/crossplane --version 1.19.1 --set args={'--debug'}"
   }
 
   depends_on = [

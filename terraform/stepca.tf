@@ -15,6 +15,7 @@ resource azapi_resource roots_pem {
       azCliVersion = "2.69.0"
       retentionInterval = "P1D"
       cleanupPreference = "OnSuccess"
+      forceUpdateTag = timestamp()
 
       storageAccountSettings = {
         storageAccountName = azurerm_storage_account.environment.name
@@ -27,6 +28,7 @@ resource azapi_resource roots_pem {
       }
 
       scriptContent = <<-EOF
+        set -e
         jq -Rs '{"roots_pem":.}' <(curl -kvs "https://ca.${data.azurerm_private_dns_zone.platform_internal.name}/roots.pem") > $AZ_SCRIPTS_OUTPUT_PATH
       EOF
     }

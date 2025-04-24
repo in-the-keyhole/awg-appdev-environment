@@ -187,12 +187,17 @@ metadata:
   annotations:
     crossplane.io/external-name: awg-appdev-init
 spec:
+  providerConfigRef:
+    name: default
+  deletionPolicy: Delete
+  rollbackLimit: 1000
   forProvider:
     namespace: awg-appdev
     chart:
       repository: oci://${platform_registry.login_server}/charts
       name: awg-appdev-init
       version: ${awg_appdev_version}
+    wait: true
     values:
       repoHost: ${platform_registry.login_server}
       security:

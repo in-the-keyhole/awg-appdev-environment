@@ -1,13 +1,13 @@
 locals {
-  aks_bootstrap_vars = {
+  aks_boot_vars = {
     mark = 6
-    hash = filesha1("${path.module}/aks-bootstrap.yaml.tftpl")
+    hash = filesha1("${path.module}/aks-boot.yaml.tftpl")
     namespace = "awg-appdev"
     default_name = var.default_name
     release_name = var.release_name
     default_tags = var.default_tags
     platform_registry = data.azurerm_container_registry.platform
-    awg_appdev_version = "0.0.386"
+    awg_appdev_version = "0.0.393"
     azure_subscription_id = data.azurerm_client_config.current.subscription_id
     dns_zone_name = azurerm_dns_zone.public.name
     internal_dns_zone_name = azurerm_private_dns_zone.internal.name
@@ -45,6 +45,7 @@ locals {
         subscriptionId = data.azurerm_client_config.current.subscription_id
         resourceGroupId = azurerm_resource_group.aks.id
         vnetId = data.azurerm_virtual_network.platform.id
+        defaultSubnetId = data.azurerm_subnet.default.id
         privateSubnetId = data.azurerm_subnet.private.id
       }
       cluster = azurerm_kubernetes_cluster.aks
@@ -52,29 +53,33 @@ locals {
   }
 }
 
+locals {
+  aks_boot_zip_content = templatefile("${path.module}/aks-boot.yaml.tftpl", merge(local.aks_boot_vars, {
+    uid = sha1(jsonencode(local.aks_boot_vars))
+  }))
+}
+
 # package required files up into ZIP
-data archive_file aks_bootstrap_zip {
+resource archive_file aks_boot_zip {
   type = "zip"
-  output_path = "${path.module}/.terraform/tmp/aks-boot.zip"
+  output_path = "${path.module}/.terraform/tmp/aks-boot-${md5(local.aks_boot_zip_content)}.zip"
   
   source {
-    filename = "aks-bootstrap.yaml"
-    content = templatefile("${path.module}/aks-bootstrap.yaml.tftpl", merge(local.aks_bootstrap_vars, {
-      uid = sha1(jsonencode(local.aks_bootstrap_vars))
-    }))
+    filename = "aks-boot.yaml"
+    content = local.aks_boot_zip_content
   }
 }
 
 # use AKS runCommand resource to invoke kubectl, running our init yaml
-resource azapi_resource_action aks_bootstrap {
+resource azapi_resource_action aks_boot {
   type = "Microsoft.ContainerService/managedClusters@2025-01-01"
   resource_id = azurerm_kubernetes_cluster.aks.id
   action = "runCommand"
   method = "POST"
   body = {
     clusterToken = data.external.aks_credentials.result.accessToken
-    context = filebase64(data.archive_file.aks_bootstrap_zip.output_path)
-    command = "kubectl apply -f aks-bootstrap.yaml"
+    context = filebase64(archive_file.aks_boot_zip.output_path)
+    command = "kubectl apply -f aks-boot.yaml"
   }
 
   depends_on = [

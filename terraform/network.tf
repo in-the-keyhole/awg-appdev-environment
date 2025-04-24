@@ -4,6 +4,13 @@ data azurerm_virtual_network platform {
   resource_group_name = data.azurerm_resource_group.platform.name
 }
 
+data azurerm_subnet default {
+  provider = azurerm.platform
+  name = "default"
+  resource_group_name = data.azurerm_resource_group.platform.name
+  virtual_network_name = data.azurerm_virtual_network.platform.name
+}
+
 data azurerm_subnet private {
   provider = azurerm.platform
   name = "private"
