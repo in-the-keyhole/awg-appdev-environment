@@ -7,7 +7,7 @@ locals {
     release_name = var.release_name
     default_tags = var.default_tags
     platform_registry = data.azurerm_container_registry.platform
-    awg_appdev_version = "0.0.393"
+    awg_appdev_version = "0.0.394"
     azure_subscription_id = data.azurerm_client_config.current.subscription_id
     dns_zone_name = azurerm_dns_zone.public.name
     internal_dns_zone_name = azurerm_private_dns_zone.internal.name
