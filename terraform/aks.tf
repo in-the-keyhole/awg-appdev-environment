@@ -216,7 +216,7 @@ resource azapi_update_resource aks_internal_ca {
   body = {
     properties ={
       securityProfile = {
-        customCaTrustCertificates = [ base64encode(local.roots_pem)]
+        customCaTrustCertificates = [ base64encode(var.root_ca_certs)]
       }
     }
   }

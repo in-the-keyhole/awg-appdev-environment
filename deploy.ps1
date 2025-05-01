@@ -17,15 +17,20 @@ param(
     
     [Parameter(Mandatory)][string]$MetadataLocation,
     [Parameter(Mandatory)][string]$ResourceLocation,
+    [Parameter(Mandatory)][string]$RootCaCerts,
 
     [string]$PlatformSubscriptionId,
     [Parameter(Mandatory)][string]$PlatformName,
 
     [Parameter(Mandatory)][string]$PlatformDnsZoneName,
     [Parameter(Mandatory)][string]$DnsZoneName,
+    [Parameter(Mandatory)][string]$AcmeServer,
+    [Parameter(Mandatory)][string]$AcmeEmail,
+
     [Parameter(Mandatory)][string]$PlatformInternalDnsZoneName,
     [Parameter(Mandatory)][string]$InternalDnsZoneName,
-    [Parameter(Mandatory)][string]$InternalCaFingerprint,
+    [Parameter(Mandatory)][string]$InternalAcmeServer,
+    [Parameter(Mandatory)][string]$InternalAcmeEmail,
 
     [Parameter(Mandatory)][string]$AksVnetSubnetAddressPrefix,
 
@@ -38,9 +43,7 @@ param(
     [Parameter(Mandatory)][string]$AksPodCidr,
     [Parameter(Mandatory)][string]$AksSysNodeSize,
     [AllowNull()][Nullable[int]]$AksSysMinNodeCount = $null,
-    [AllowNull()][Nullable[int]]$AksSysMaxNodeCount = $null,
-
-    [Parameter(Mandatory)][string]$PrivateLinkZoneResourceGroupId
+    [AllowNull()][Nullable[int]]$AksSysMaxNodeCount = $null
 )
 
 $ErrorActionPreference = "Stop"
@@ -82,13 +85,17 @@ if ($Stage -eq 'all' -or $Stage -eq 'tf') {
         default_tags = $DefaultTags
         metadata_location = $MetadataLocation
         resource_location = $ResourceLocation
+        root_ca_certs = $RootCaCerts
         platform_subscription_id = $PlatformSubscriptionId
         platform_name = $PlatformName
         platform_dns_zone_name = $PlatformDnsZoneName
         dns_zone_name = $DnsZoneName
+        acme_server = $AcmeServer
+        acme_email = $AcmeEmail
         platform_internal_dns_zone_name = $PlatformInternalDnsZoneName
         internal_dns_zone_name = $InternalDnsZoneName
-        internal_ca_fingerprint = $InternalCaFingerprint
+        internal_acme_server = $InternalAcmeServer
+        internal_acme_email = $InternalAcmeEmail
         aks_vnet_subnet_address_prefixes = @( $AksVnetSubnetAddressPrefix )
         aks_sku_name = $AksSkuName
         aks_sku_tier = $AksSkuTier
@@ -100,7 +107,6 @@ if ($Stage -eq 'all' -or $Stage -eq 'tf') {
         aks_sys_node_size = $AksSysNodeSize
         aks_sys_node_min_count = $AksSysMinNodeCount
         aks_sys_node_max_count = $AksSysMaxNodeCount
-        privatelink_zone_resource_group_id = $PrivateLinkZoneResourceGroupId
     } | ConvertTo-Json | Out-File .tmp/${DefaultName}.tfvars.json
 
     Push-Location .\terraform

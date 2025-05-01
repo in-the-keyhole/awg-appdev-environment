@@ -25,6 +25,10 @@ variable resource_location {
   description = "Location of other resource items."
 }
 
+variable root_ca_certs {
+  type = string
+}
+
 variable platform_subscription_id {
   type = string
   description = "Subscription ID of the Platform."
@@ -50,6 +54,14 @@ variable dns_zone_name {
   }
 }
 
+variable acme_server {
+  type = string
+}
+
+variable acme_email {
+  type = string
+}
+
 variable internal_dns_zone_name {
   type = string
   validation {
@@ -58,7 +70,11 @@ variable internal_dns_zone_name {
   }
 }
 
-variable internal_ca_fingerprint {
+variable internal_acme_server {
+  type = string
+}
+
+variable internal_acme_email {
   type = string
 }
 
@@ -114,9 +130,4 @@ variable aks_sys_node_min_count {
 variable aks_sys_node_max_count {
   type = number
   default = 3
-}
-
-variable privatelink_zone_resource_group_id {
-  description = "ID of the resource group of the hub that holds the privatelink zones"
-  type = string
 }

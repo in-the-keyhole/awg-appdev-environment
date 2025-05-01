@@ -11,7 +11,7 @@ resource azurerm_storage_account environment {
 
   network_rules {
     bypass = [ "AzureServices" ]
-    default_action = "Allow"
+    default_action = "Deny"
   }
 
   lifecycle {

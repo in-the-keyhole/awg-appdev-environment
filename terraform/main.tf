@@ -8,10 +8,6 @@ terraform {
       source  = "azure/azapi"
       version = "~>2.3"
     }
-    smallstep = {
-      source = "smallstep/smallstep"
-      version = "0.6.0"
-    }
   }
   backend azurerm {
     

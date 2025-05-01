@@ -3,7 +3,7 @@ kind: Namespace
 metadata:
   name: ${namespace}
 ---
-
+ 
 ##
 # Various information to be made available to Crossplane at runtime.
 ##
@@ -76,7 +76,7 @@ kind: Provider
 metadata:
   name: upbound-provider-kubernetes
 spec:
-  package: xpkg.upbound.io/upbound/provider-kubernetes:v0.17.1
+  package: xpkg.upbound.io/upbound/provider-kubernetes:v0
   runtimeConfigRef:
     apiVersion: pkg.crossplane.io/v1beta1
     kind: DeploymentRuntimeConfig
@@ -93,118 +93,6 @@ metadata:
 spec:
   credentials:
     source: InjectedIdentity
----
-
-##
-# ServiceAccount to be used by the Crossplane Helm provider.
-##
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  namespace: crossplane-system
-  name: upbound-provider-helm
----
-
-##
-# Grant the Crossplane Helm provider cluster-admin so that it can install Helm charts into any namespace, including
-# cluster-scoped items. This is required because our init and conf packages contain Crossplane resources. This is
-# used by the default provider only.
-##
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: upbound-provider-helm
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  namespace: crossplane-system
-  name: upbound-provider-helm
----
-
-##
-# Alter the Crossplane Helm provider so it has Azure Workload Identity information injected into it. This is necessary
-# so that it can contact the Container Registry.
-##
-apiVersion: pkg.crossplane.io/v1beta1
-kind: DeploymentRuntimeConfig
-metadata:
-  name: upbound-provider-helm
-spec:
-  serviceAccountTemplate:
-    metadata:
-      name: upbound-provider-helm
-  deploymentTemplate:
-    spec:
-      selector: {}
-      template:
-        metadata:
-          labels:
-            azure.workload.identity/use: "true"
-        spec:
-          containers:
-          - name: package-runtime
-            args:
-            - --enable-management-policies
----
-
-##
-# Install the Crossplane Helm provider.
-##
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: upbound-provider-helm
-spec:
-  package: xpkg.upbound.io/upbound/provider-helm:v0.20.4
-  runtimeConfigRef:
-    apiVersion: pkg.crossplane.io/v1beta1
-    kind: DeploymentRuntimeConfig
-    name: upbound-provider-helm
----
-
-##
-# Default provider configuration for the Crossplane Helm provider.
-##
-apiVersion: helm.crossplane.io/v1beta1
-kind: ProviderConfig
-metadata:
-  name: default
-spec:
-  credentials:
-    source: InjectedIdentity
----
-
-##
-# Instruct the Crossplane Helm provider to install awg-appdev-init. This exists to bootstrap the rest of the process through Helm charts.
-##
-apiVersion: helm.crossplane.io/v1beta1
-kind: Release
-metadata:
-  name: awg-appdev-init
-  annotations:
-    crossplane.io/external-name: awg-appdev-init
-spec:
-  providerConfigRef:
-    name: default
-  deletionPolicy: Delete
-  rollbackLimit: 1000
-  forProvider:
-    namespace: awg-appdev
-    chart:
-      repository: oci://${platform_registry.login_server}/charts
-      name: awg-appdev-init
-      version: ${awg_appdev_version}
-    wait: true
-    values:
-      repoHost: ${platform_registry.login_server}
-      security:
-        certificates: ${jsonencode(internal_cert_bundle)}
-        issuers:
-          internal:
-            server: ${internal_acme_url}
 ---
 
 ##
@@ -281,3 +169,118 @@ spec:
 ---
 %{ endfor ~}
 
+##
+# ServiceAccount to be used by the Crossplane Helm provider.
+##
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: crossplane-system
+  name: upbound-provider-helm
+---
+
+##
+# Grant the Crossplane Helm provider cluster-admin so that it can install Helm charts into any namespace, including
+# cluster-scoped items. This is required because our init and conf packages contain Crossplane resources. This is
+# used by the default provider only.
+##
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: upbound-provider-helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  namespace: crossplane-system
+  name: upbound-provider-helm
+---
+
+##
+# Alter the Crossplane Helm provider so it has Azure Workload Identity information injected into it. This is necessary
+# so that it can contact the Container Registry.
+##
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: upbound-provider-helm
+spec:
+  serviceAccountTemplate:
+    metadata:
+      name: upbound-provider-helm
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        metadata:
+          labels:
+            azure.workload.identity/use: "true"
+        spec:
+          containers:
+          - name: package-runtime
+            args:
+            - --enable-management-policies
+---
+
+##
+# Install the Crossplane Helm provider.
+##
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-helm
+spec:
+  package: xpkg.upbound.io/upbound/provider-helm:v0
+  runtimeConfigRef:
+    apiVersion: pkg.crossplane.io/v1beta1
+    kind: DeploymentRuntimeConfig
+    name: upbound-provider-helm
+---
+
+##
+# Default provider configuration for the Crossplane Helm provider.
+##
+apiVersion: helm.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: InjectedIdentity
+---
+
+##
+# Instruct the Crossplane Helm provider to install awg-appdev-init. This exists to bootstrap the rest of the process through Helm charts.
+##
+apiVersion: helm.crossplane.io/v1beta1
+kind: Release
+metadata:
+  name: awg-appdev-init
+  annotations:
+    crossplane.io/external-name: awg-appdev-init
+spec:
+  providerConfigRef:
+    name: default
+  deletionPolicy: Delete
+  rollbackLimit: 1000
+  forProvider:
+    namespace: awg-appdev
+    chart:
+      repository: oci://${platform_registry.login_server}/charts
+      name: awg-appdev-init
+      version: ${awg_appdev_version}
+    wait: true
+    values:
+      repoHost: ${platform_registry.login_server}
+      security:
+        caroots: ${jsonencode(root_ca_certs)}
+        issuers:
+          external:
+            server: "${acme_server}"
+            email: "${acme_email}"
+          internal:
+            server: "${internal_acme_server}"
+            email: "${internal_acme_email}"
+---
