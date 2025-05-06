@@ -31,6 +31,18 @@ resource azurerm_network_security_group aks {
   resource_group_name = azurerm_resource_group.aks.name
   location = data.azurerm_virtual_network.platform.location
 
+  security_rule {
+    name = "AllowAllInBound"
+    priority = 1001
+    direction = "Inbound"
+    access = "Allow"
+    protocol = "*"
+    source_port_range = "*"
+    destination_port_range = "*"
+    source_address_prefix = "*"
+    destination_address_prefix = "*"
+  }
+
   lifecycle {
     ignore_changes = [ tags ]
   }
