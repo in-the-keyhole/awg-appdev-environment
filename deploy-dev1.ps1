@@ -18,9 +18,9 @@ param(
     -DefaultTags @{} `
     -MetadataLocation "northcentralus" `
     -ResourceLocation "southcentralus" `
-    -PlatformSubscriptionId "6190d2d3-f65d-4f7a-939e-ad9829c27fd5" `
-    -PlatformName "awg-appdev-labs" `
-    -PlatformDnsZoneName "labs.appdev.az.awginc.com" `
+    -CoreSubscriptionId "6190d2d3-f65d-4f7a-939e-ad9829c27fd5" `
+    -CoreName "awg-appdev-labs" `
+    -CoreDnsZoneName "labs.appdev.az.awginc.com" `
     -DnsZoneName "dev1.labs.appdev.az.awginc.com" `
     -RootCaCerts "-----BEGIN CERTIFICATE-----
 MIIBbzCCARWgAwIBAgIQFhTlZWo+1Xt03/Yt7Z5vFTAKBggqhkjOPQQDAjAWMRQw
@@ -46,7 +46,7 @@ BEIEn44KTQTn/jysfsJ6frKWMr/IQBddPLhI6Q==
 " `
     -AcmeServer "https://acme-v02.api.letsencrypt.org/directory" `
     -AcmeEmail "jhaltom@keyholesoftware.com" `
-    -PlatformInternalDnsZoneName "labs.appdev.az.int.awginc.com" `
+    -CoreInternalDnsZoneName "labs.appdev.az.int.awginc.com" `
     -InternalDnsZoneName "dev1.labs.appdev.az.int.awginc.com" `
     -InternalAcmeServer "https://ca.az.int.awginc.com/v1/pki/acme/directory" `
     -InternalAcmeEmail "jhaltom@keyholesoftware.com" `

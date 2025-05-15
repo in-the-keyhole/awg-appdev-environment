@@ -19,15 +19,15 @@ param(
     [Parameter(Mandatory)][string]$ResourceLocation,
     [Parameter(Mandatory)][string]$RootCaCerts,
 
-    [string]$PlatformSubscriptionId,
-    [Parameter(Mandatory)][string]$PlatformName,
+    [string]$CoreSubscriptionId,
+    [Parameter(Mandatory)][string]$CoreName,
 
-    [Parameter(Mandatory)][string]$PlatformDnsZoneName,
+    [Parameter(Mandatory)][string]$CoreDnsZoneName,
     [Parameter(Mandatory)][string]$DnsZoneName,
     [Parameter(Mandatory)][string]$AcmeServer,
     [Parameter(Mandatory)][string]$AcmeEmail,
 
-    [Parameter(Mandatory)][string]$PlatformInternalDnsZoneName,
+    [Parameter(Mandatory)][string]$CoreInternalDnsZoneName,
     [Parameter(Mandatory)][string]$InternalDnsZoneName,
     [Parameter(Mandatory)][string]$InternalAcmeServer,
     [Parameter(Mandatory)][string]$InternalAcmeEmail,
@@ -86,13 +86,13 @@ if ($Stage -eq 'all' -or $Stage -eq 'tf') {
         metadata_location = $MetadataLocation
         resource_location = $ResourceLocation
         root_ca_certs = $RootCaCerts
-        platform_subscription_id = $PlatformSubscriptionId
-        platform_name = $PlatformName
-        platform_dns_zone_name = $PlatformDnsZoneName
+        core_subscription_id = $CoreSubscriptionId
+        core_name = $CoreName
+        core_dns_zone_name = $CoreDnsZoneName
         dns_zone_name = $DnsZoneName
         acme_server = $AcmeServer
         acme_email = $AcmeEmail
-        platform_internal_dns_zone_name = $PlatformInternalDnsZoneName
+        core_internal_dns_zone_name = $CoreInternalDnsZoneName
         internal_dns_zone_name = $InternalDnsZoneName
         internal_acme_server = $InternalAcmeServer
         internal_acme_email = $InternalAcmeEmail
